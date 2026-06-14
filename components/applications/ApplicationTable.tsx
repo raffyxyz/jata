@@ -11,12 +11,12 @@ function ApplicationTable({ applications }: ApplicationTableProps) {
 
   return (
     <div
-      className="bg-bg-surface rounded-lg"
+      className="bg-bg-surface rounded-lg overflow-x-auto"
       style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}
     >
       {/* Header */}
       <div
-        className="flex items-center px-1"
+        className="flex items-center px-1 min-w-[600px]"
         style={{ height: 40, borderBottom: "1px solid var(--border)" }}
       >
         <span className="text-xs font-medium text-text-tertiary" style={{ flex: "0 0 35%" }}>

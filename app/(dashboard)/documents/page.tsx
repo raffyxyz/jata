@@ -16,12 +16,14 @@ export default function DocumentsPage() {
 
   return (
     <div>
-      <h1
-        className="font-display font-semibold mb-6"
-        style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 24, lineHeight: 1.2, color: "var(--text-primary)" }}
-      >
-        Documents
-      </h1>
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+        <h1
+          className="font-display font-semibold"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 24, lineHeight: 1.2, color: "var(--text-primary)" }}
+        >
+          Documents
+        </h1>
+      </div>
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
@@ -74,17 +76,17 @@ export default function DocumentsPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <button
-                  className="flex items-center justify-center text-text-tertiary hover:text-text-secondary hover:bg-bg-muted transition-all"
-                  style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
+                  className="flex items-center justify-center text-text-tertiary hover:text-text-secondary active:bg-bg-muted transition-all"
+                  style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)" }}
                   title="Download"
                 >
                   <Download size={14} />
                 </button>
                 <button
-                  className="flex items-center justify-center text-text-tertiary hover:text-danger hover:bg-danger-subtle transition-all"
-                  style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
+                  className="flex items-center justify-center text-text-tertiary hover:text-danger active:bg-danger-subtle transition-all"
+                  style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)" }}
                   title="Delete"
                 >
                   <Trash2 size={14} />

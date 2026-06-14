@@ -45,7 +45,7 @@ export default function ApplicationsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1
           className="font-display font-semibold"
           style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 24, lineHeight: 1.2, color: "var(--text-primary)" }}
@@ -62,7 +62,7 @@ export default function ApplicationsPage() {
       {/* Filter bar */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         {/* Search */}
-        <div className="relative" style={{ width: 280 }}>
+        <div className="relative w-full sm:w-[280px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
           <input
             type="text"

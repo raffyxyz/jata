@@ -110,7 +110,7 @@ export default function ResumesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1
           className="font-display font-semibold"
           style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 24, lineHeight: 1.2, color: "var(--text-primary)" }}
@@ -161,7 +161,7 @@ export default function ResumesPage() {
               style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}
             >
               {/* Actions overlay */}
-              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-3 right-3 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <a
                   href={r.fileUrl}
                   target="_blank"

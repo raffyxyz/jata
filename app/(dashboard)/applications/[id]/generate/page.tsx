@@ -103,7 +103,7 @@ export default function GeneratePage() {
       <DocumentTypePicker selected={docType} onSelect={setDocType} />
 
       {/* Tone selector */}
-      <div className="flex items-center gap-4 mb-6 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-6">
         <div>
           <label style={{ fontSize: 11, fontWeight: 500, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>Tone</label>
           <div className="flex gap-1">

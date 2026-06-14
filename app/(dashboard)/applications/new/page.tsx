@@ -315,7 +315,7 @@ export default function NewApplicationPage() {
       </h1>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
         {["Analysis", "Results", "Generate"].map((label, i) => (
           <div key={label} className="flex items-center gap-2">
             <div
@@ -386,7 +386,7 @@ export default function NewApplicationPage() {
             >
               Select resume
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {resumesLoading
                 ? Array.from({ length: 2 }).map((_, i) => (
                     <div
@@ -806,7 +806,7 @@ export default function NewApplicationPage() {
             Generate Documents
           </h3>
 
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {docTypes.map((dt) => {
               const active = docType === dt.value;
               const Icon = dt.icon;

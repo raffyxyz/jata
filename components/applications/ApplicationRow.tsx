@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -31,6 +32,33 @@ function ApplicationRow({ application, isLast }: ApplicationRowProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const deleteMutation = useDeleteApplication();
   const updateStatusMutation = useUpdateApplicationStatus();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuStyle, setMenuStyle] = useState<Record<string, string | number> | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      setMenuStyle(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setMenuStyle({
+          top: rect.bottom + 4,
+          right: window.innerWidth - rect.right,
+        });
+      }
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [menuOpen]);
 
   const handleView = () => {
     setMenuOpen(false);
@@ -77,7 +105,7 @@ function ApplicationRow({ application, isLast }: ApplicationRowProps) {
 
   return (
     <div
-      className="flex items-center transition-all duration-120 hover:bg-bg-muted relative"
+      className="flex items-center transition-all duration-120 hover:bg-bg-muted relative min-w-[600px]"
       style={{
         height: 52,
         borderBottom: isLast ? "none" : "1px solid var(--border)",
@@ -119,97 +147,77 @@ function ApplicationRow({ application, isLast }: ApplicationRowProps) {
 
       {/* Actions */}
       <div style={{ width: 80 }} className="flex justify-center">
-        <div className="relative">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center justify-center text-text-tertiary hover:text-text-secondary transition-colors"
-            style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
-          >
-            <MoreHorizontal size={16} />
-          </button>
-          {menuOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div
-                className="absolute right-0 top-full mt-1 z-20 bg-bg-surface shadow-[var(--shadow-md)] rounded-md py-1 min-w-[160px]"
-                style={{ borderRadius: "var(--radius-md)" }}
-              >
-                {/* View */}
-                <button
-                  onClick={handleView}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-text-primary hover:bg-bg-muted transition-colors"
-                  style={{ fontSize: 13 }}
-                >
-                  <Eye size={14} className="text-text-secondary" />
-                  View
-                </button>
-
-                {/* Edit */}
-                <button
-                  onClick={handleEdit}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-text-primary hover:bg-bg-muted transition-colors"
-                  style={{ fontSize: 13 }}
-                >
-                  <Pencil size={14} className="text-text-secondary" />
-                  Edit
-                </button>
-
-                {/* Divider */}
-                <div className="my-1 mx-3" style={{ height: 1, backgroundColor: "var(--border)" }} />
-
-                {/* Status label */}
-                <p
-                  className="px-3 py-1 text-xs font-medium"
-                  style={{ color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}
-                >
-                  Status
-                </p>
-
-                {STATUS_OPTIONS.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => handleStatusChange(status)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-text-primary hover:bg-bg-muted transition-colors"
-                    style={{ fontSize: 13 }}
-                  >
-                    <span
-                      className="rounded-full"
-                      style={{
-                        width: 8,
-                        height: 8,
-                        backgroundColor:
-                          status.toLowerCase() === application.status
-                            ? "var(--accent)"
-                            : "var(--text-tertiary)",
-                      }}
-                    />
-                    {status}
-                    {status.toLowerCase() === application.status && (
-                      <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-tertiary)" }}>
-                        Active
-                      </span>
-                    )}
-                  </button>
-                ))}
-
-                {/* Divider */}
-                <div className="my-1 mx-3" style={{ height: 1, backgroundColor: "var(--border)" }} />
-
-                {/* Delete */}
-                <button
-                  onClick={handleDelete}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-danger hover:bg-danger-subtle transition-colors"
-                  style={{ fontSize: 13 }}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 size={14} />
-                  {confirmDelete ? "Confirm delete?" : "Delete"}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        <button
+          ref={buttonRef}
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex items-center justify-center text-text-tertiary hover:text-text-secondary transition-colors"
+          style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
+        >
+          <MoreHorizontal size={16} />
+        </button>
       </div>
+
+      {menuOpen && menuStyle && createPortal(
+        <>
+          <div className="fixed inset-0 z-50" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
+          <div
+            className="fixed z-50 bg-bg-surface shadow-[var(--shadow-md)] rounded-md py-1 min-w-[180px]"
+            style={{ top: menuStyle.top, right: menuStyle.right, borderRadius: "var(--radius-md)" }}
+          >
+            <button
+              onClick={handleView}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-text-primary hover:bg-bg-muted transition-colors"
+            >
+              <Eye size={13} className="text-text-secondary shrink-0" />
+              View
+            </button>
+            <button
+              onClick={handleEdit}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-text-primary hover:bg-bg-muted transition-colors"
+            >
+              <Pencil size={13} className="text-text-secondary shrink-0" />
+              Edit
+            </button>
+            <div className="my-1 mx-3" style={{ height: 1, backgroundColor: "var(--border)" }} />
+            <p className="px-3 py-1 text-[11px] font-medium text-text-tertiary uppercase tracking-wide">
+              Status
+            </p>
+            {STATUS_OPTIONS.map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusChange(status)}
+                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-text-primary hover:bg-bg-muted transition-colors"
+              >
+                <span
+                  className="rounded-full shrink-0"
+                  style={{
+                    width: 8,
+                    height: 8,
+                    backgroundColor:
+                      status.toLowerCase() === application.status
+                        ? "var(--accent)"
+                        : "var(--text-tertiary)",
+                  }}
+                />
+                {status}
+                {status.toLowerCase() === application.status && (
+                  <span className="ml-auto text-[11px] text-text-tertiary">Active</span>
+                )}
+              </button>
+            ))}
+            <div className="my-1 mx-3" style={{ height: 1, backgroundColor: "var(--border)" }} />
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-danger hover:bg-danger-subtle transition-colors"
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 size={13} className="shrink-0" />
+              {confirmDelete ? "Confirm delete?" : "Delete"}
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }

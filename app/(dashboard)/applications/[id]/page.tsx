@@ -130,7 +130,7 @@ export default function ApplicationDetailPage({
       </Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between gap-3 mb-8 flex-wrap">
         <div>
           <h1
             className="font-display font-semibold"
@@ -142,7 +142,7 @@ export default function ApplicationDetailPage({
             {application.role}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -158,7 +158,7 @@ export default function ApplicationDetailPage({
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-8">
         <Card>
           <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4 }}>ATS Score</p>
           <ScorePill score={application.score} />

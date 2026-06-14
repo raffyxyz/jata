@@ -18,7 +18,7 @@ const types: { value: DocType; label: string; icon: React.ElementType }[] = [
 
 function DocumentTypePicker({ selected, onSelect }: DocumentTypePickerProps) {
   return (
-    <div className="flex gap-1 mb-6">
+    <div className="flex gap-1 mb-6 flex-wrap">
       {types.map((t) => {
         const active = t.value === selected;
         const Icon = t.icon;

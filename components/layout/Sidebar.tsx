@@ -153,8 +153,8 @@ function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center gap-0.5 transition-colors"
-              style={{ width: 64, color: active ? "var(--accent)" : "var(--text-tertiary)" }}
+              className="flex flex-col items-center justify-center gap-0.5 transition-colors flex-1 h-full"
+              style={{ color: active ? "var(--accent)" : "var(--text-tertiary)" }}
             >
               <item.icon size={20} strokeWidth={active ? 2 : 1.5} />
               <span style={{ fontSize: 10, fontWeight: 500 }}>{item.label}</span>

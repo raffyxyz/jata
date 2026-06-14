@@ -27,6 +27,11 @@ export const metadata: Metadata = {
   description: "JATA - Job Application Tracker & Assistant. Track and optimize your job applications with AI-powered ATS analysis.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

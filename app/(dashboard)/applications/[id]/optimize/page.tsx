@@ -74,9 +74,9 @@ export default function OptimizePage() {
       </h1>
 
       {/* Two columns */}
-      <div className="flex gap-5" style={{ minHeight: "calc(100vh - 200px)" }}>
+      <div className="flex flex-col lg:flex-row gap-5" style={{ minHeight: "calc(100vh - 200px)" }}>
         {/* Left: Current resume */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center justify-between mb-3">
             <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
               Current Resume
@@ -101,7 +101,7 @@ export default function OptimizePage() {
         </div>
 
         {/* Right: Suggestions */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <h3 className="mb-3" style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
             Suggested Improvements
           </h3>
