@@ -2,26 +2,10 @@
 
 import { useState } from "react";
 import { Plus, Search, ChevronDown } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { ApplicationTable } from "@/components/applications/ApplicationTable";
-import type { ApplicationData } from "@/components/applications/ApplicationRow";
-
-
-
-const mockApplications: ApplicationData[] = [
-  { id: "1", company: "Stripe", role: "Senior Frontend Engineer", score: 82, status: "interview", dateAdded: new Date(Date.now() - 86400000 * 2) },
-  { id: "2", company: "Vercel", role: "Product Engineer", score: 65, status: "applied", dateAdded: new Date(Date.now() - 86400000 * 5) },
-  { id: "3", company: "Linear", role: "Design Engineer", score: 91, status: "offer", dateAdded: new Date(Date.now() - 86400000 * 10) },
-  { id: "4", company: "Railway", role: "Full Stack Developer", score: 45, status: "rejected", dateAdded: new Date(Date.now() - 86400000 * 14) },
-  { id: "5", company: "Anthropic", role: "AI Engineer", score: 78, status: "interview", dateAdded: new Date(Date.now() - 86400000 * 3) },
-  { id: "6", company: "Notion", role: "Frontend Engineer", score: 55, status: "applied", dateAdded: new Date(Date.now() - 86400000 * 7) },
-  { id: "7", company: "Figma", role: "Design Engineer", score: 88, status: "applied", dateAdded: new Date(Date.now() - 86400000) },
-  { id: "8", company: "GitHub", role: "Developer Advocate", score: 72, status: "draft", dateAdded: new Date(Date.now() - 86400000 * 20) },
-  { id: "9", company: "Supabase", role: "Full Stack Developer", score: 60, status: "applied", dateAdded: new Date(Date.now() - 86400000 * 12) },
-  { id: "10", company: "Tailwind Labs", role: "UI Engineer", score: 95, status: "offer", dateAdded: new Date(Date.now() - 86400000 * 30) },
-  { id: "11", company: "Expo", role: "React Native Engineer", score: 70, status: "rejected", dateAdded: new Date(Date.now() - 86400000 * 45) },
-  { id: "12", company: "PlanetScale", role: "Backend Engineer", score: 50, status: "applied", dateAdded: new Date(Date.now() - 86400000 * 60) },
-];
+import { useApplications } from "@/lib/presentation/hooks/useApplications";
 
 const statuses = ["All", "Applied", "Interview", "Offer", "Rejected", "Draft"];
 const sortOptions = [
@@ -32,13 +16,14 @@ const sortOptions = [
 ];
 
 export default function ApplicationsPage() {
+  const { data: applications = [], isLoading } = useApplications();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
   const perPage = 10;
 
-  const filtered = mockApplications
+  const filtered = applications
     .filter((a) => {
       const q = search.toLowerCase();
       const matchesSearch = a.company.toLowerCase().includes(q) || a.role.toLowerCase().includes(q);
@@ -67,9 +52,11 @@ export default function ApplicationsPage() {
         >
           Applications
         </h1>
-        <Button icon={<Plus size={16} />}>
-          New Application
-        </Button>
+        <Link href="/applications/new">
+          <Button icon={<Plus size={16} />}>
+            New Application
+          </Button>
+        </Link>
       </div>
 
       {/* Filter bar */}
@@ -118,11 +105,31 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <ApplicationTable applications={paginated} />
+      {/* Table / Loading */}
+      {isLoading ? (
+        <div className="bg-bg-surface rounded-lg" style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center px-1"
+              style={{ height: 52, borderBottom: i < 5 ? "1px solid var(--border)" : "none" }}
+            >
+              <div className="flex-1 space-y-2" style={{ flex: "0 0 35%" }}>
+                <div className="h-3 w-24 bg-bg-muted rounded animate-skeleton" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} />
+                <div className="h-2.5 w-36 bg-bg-muted rounded animate-skeleton" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} />
+              </div>
+              <div style={{ width: 100 }}><div className="h-5 w-16 bg-bg-muted rounded animate-skeleton" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} /></div>
+              <div style={{ width: 120 }}><div className="h-5 w-20 bg-bg-muted rounded animate-skeleton" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} /></div>
+              <div style={{ width: 100 }}><div className="h-3 w-14 bg-bg-muted rounded animate-skeleton" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} /></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ApplicationTable applications={paginated} />
+      )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-6">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
@@ -146,7 +153,7 @@ export default function ApplicationsPage() {
       )}
 
       {/* Empty state */}
-      {filtered.length === 0 && (
+      {!isLoading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20">
           <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
             <rect x="10" y="16" width="60" height="48" rx="6" stroke="var(--border)" strokeWidth="2" fill="none" />

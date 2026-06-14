@@ -1,15 +1,112 @@
 "use client";
 
-import { FileText, Plus, Trash2, Eye } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { FileText, Plus, Trash2, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui/Toast";
 
-const mockResumes = [
-  { id: "1", name: "general-2024.pdf", date: "Dec 12, 2024", size: "245 KB", linked: 3 },
-  { id: "2", name: "frontend-2025.pdf", date: "Mar 1, 2025", size: "210 KB", linked: 1 },
-  { id: "3", name: "backend-2024.pdf", date: "Nov 5, 2024", size: "198 KB", linked: 0 },
-];
+interface Resume {
+  id: string;
+  userId: string;
+  name: string | null;
+  fileUrl: string;
+  parsedText: string | null;
+  createdAt: string;
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function ResumesPage() {
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchResumes = useCallback(async () => {
+    try {
+      const res = await fetch("/api/resumes");
+      if (!res.ok) throw new Error("Failed to fetch resumes");
+      const data = await res.json();
+      setResumes(data);
+    } catch {
+      toast("error", "Failed to load resumes");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchResumes();
+  }, [fetchResumes]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      toast("error", "Only PDF files are accepted");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast("error", "File exceeds 5MB limit");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Upload failed");
+      }
+
+      toast("success", "Resume uploaded successfully");
+      await fetchResumes();
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+
+    try {
+      const res = await fetch(`/api/resumes?id=${id}`, { method: "DELETE" });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Delete failed");
+      }
+
+      toast("success", "Resume deleted");
+      setResumes((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -20,93 +117,146 @@ export default function ResumesPage() {
         >
           Resumes
         </h1>
-        <Button icon={<Plus size={16} />}>
-          Upload Resume
+        <Button
+          icon={uploading ? undefined : <Upload size={16} />}
+          loading={uploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading ? "Uploading..." : "Upload Resume"}
         </Button>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockResumes.map((r) => (
-          <div
-            key={r.id}
-            className="bg-bg-surface rounded-lg p-5 relative group"
-            style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}
-          >
-            {/* Actions overlay */}
-            <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                className="flex items-center justify-center text-text-tertiary hover:text-text-secondary hover:bg-bg-muted transition-all"
-                style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
-                title="Preview"
-              >
-                <Eye size={14} />
-              </button>
-              <button
-                className="flex items-center justify-center text-text-tertiary hover:text-danger hover:bg-danger-subtle transition-all"
-                style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
-                title="Delete"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
 
-            {/* Icon */}
+      {/* Loading state */}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div
-              className="flex items-center justify-center mb-4"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "var(--radius-md)",
-                backgroundColor: "var(--accent-subtle)",
-              }}
+              key={i}
+              className="bg-bg-surface rounded-lg p-5 animate-pulse"
+              style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}
             >
-              <FileText size={20} style={{ color: "var(--accent)" }} />
+              <div className="w-10 h-10 bg-bg-muted rounded-md mb-4" />
+              <div className="h-4 bg-bg-muted rounded w-3/4 mb-3" />
+              <div className="h-3 bg-bg-muted rounded w-1/2" />
             </div>
+          ))}
+        </div>
+      )}
 
-            {/* Name */}
-            <p
-              style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)", cursor: "pointer" }}
-              title="Click to rename"
+      {/* Grid */}
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {resumes.map((r) => (
+            <div
+              key={r.id}
+              className="bg-bg-surface rounded-lg p-5 relative group"
+              style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}
             >
-              {r.name}
-            </p>
+              {/* Actions overlay */}
+              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <a
+                  href={r.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center text-text-tertiary hover:text-text-secondary hover:bg-bg-muted transition-all"
+                  style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
+                  title="Preview"
+                >
+                  <Eye size={14} />
+                </a>
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  disabled={deletingId === r.id}
+                  className="flex items-center justify-center text-text-tertiary hover:text-danger hover:bg-danger-subtle transition-all disabled:opacity-40"
+                  style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
+                  title="Delete"
+                >
+                  {deletingId === r.id ? (
+                    <svg className="animate-spin size-3.5" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <Trash2 size={14} />
+                  )}
+                </button>
+              </div>
 
-            {/* Meta */}
-            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
-              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                Uploaded {r.date} &middot; {r.size}
+              {/* Icon */}
+              <div
+                className="flex items-center justify-center mb-4"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "var(--radius-md)",
+                  backgroundColor: "var(--accent-subtle)",
+                }}
+              >
+                <FileText size={20} style={{ color: "var(--accent)" }} />
+              </div>
+
+              {/* Name */}
+              <p
+                style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}
+              >
+                {r.name ?? "Untitled"}
               </p>
-              <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                {r.linked} application{r.linked !== 1 ? "s" : ""} linked
+
+              {/* Meta */}
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                  Uploaded {formatDate(r.createdAt)}
+                </p>
+                {r.parsedText && (
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                    {r.parsedText.length.toLocaleString()} characters extracted
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Upload new card */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex flex-col items-center justify-center gap-3 bg-bg-surface rounded-lg p-5 border-2 border-dashed transition-all hover:bg-bg-muted disabled:opacity-40"
+            style={{
+              borderRadius: "var(--radius-lg)",
+              borderColor: "var(--border-strong)",
+              minHeight: 160,
+            }}
+          >
+            {uploading ? (
+              <svg className="animate-spin size-6" viewBox="0 0 24 24" fill="none" style={{ color: "var(--text-tertiary)" }}>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <Plus size={24} style={{ color: "var(--text-tertiary)" }} />
+            )}
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
+                {uploading ? "Uploading..." : "Upload new resume"}
+              </p>
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>
+                PDF up to 5MB
               </p>
             </div>
-          </div>
-        ))}
-
-        {/* Upload new card */}
-        <button
-          className="flex flex-col items-center justify-center gap-3 bg-bg-surface rounded-lg p-5 border-2 border-dashed transition-all hover:bg-bg-muted"
-          style={{
-            borderRadius: "var(--radius-lg)",
-            borderColor: "var(--border-strong)",
-            minHeight: 160,
-          }}
-        >
-          <Plus size={24} style={{ color: "var(--text-tertiary)" }} />
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
-              Upload new resume
-            </p>
-            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>
-              PDF or DOCX up to 5MB
-            </p>
-          </div>
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
 
       {/* Empty state */}
-      {mockResumes.length === 0 && (
+      {!loading && resumes.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20">
           <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
             <rect x="14" y="10" width="52" height="60" rx="6" stroke="var(--border)" strokeWidth="2" fill="none" />
@@ -126,7 +276,13 @@ export default function ResumesPage() {
           <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4, marginBottom: 16 }}>
             Upload your first resume to start tracking applications
           </p>
-          <Button icon={<Plus size={16} />}>Upload Resume</Button>
+          <Button
+            icon={<Upload size={16} />}
+            loading={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Upload Resume
+          </Button>
         </div>
       )}
     </div>

@@ -2,14 +2,18 @@
 
 import { FileText, Trash2, Download } from "lucide-react";
 import { formatRelativeDate } from "@/lib/utils/score";
+import { useGeneratedDocuments } from "@/lib/presentation/hooks/useGeneratedDocuments";
 
-const mockDocuments = [
-  { id: "1", type: "Cover Letter", company: "Stripe", role: "Senior Frontend Engineer", date: new Date(Date.now() - 86400000 * 2) },
-  { id: "2", type: "Cold Email", company: "Vercel", role: "Product Engineer", date: new Date(Date.now() - 86400000 * 5) },
-  { id: "3", type: "LinkedIn DM", company: "Linear", role: "Design Engineer", date: new Date(Date.now() - 86400000 * 10) },
-];
+const docLabels: Record<string, string> = {
+  cover_letter: "Cover Letter",
+  cold_email: "Cold Email",
+  linkedin_dm: "LinkedIn DM",
+  freelance_proposal: "Freelance Proposal",
+};
 
 export default function DocumentsPage() {
+  const { data: documents = [], isLoading } = useGeneratedDocuments();
+
   return (
     <div>
       <h1
@@ -19,9 +23,28 @@ export default function DocumentsPage() {
         Documents
       </h1>
 
-      {mockDocuments.length > 0 ? (
+      {isLoading ? (
         <div className="flex flex-col gap-2">
-          {mockDocuments.map((doc) => (
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-4 bg-bg-surface rounded-lg px-5 py-4"
+              style={{ borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-sm)" }}
+            >
+              <div
+                className="shrink-0"
+                style={{ width: 36, height: 36, borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-muted)" }}
+              />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-48 bg-bg-muted rounded" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} />
+                <div className="h-2.5 w-32 bg-bg-muted rounded" style={{ background: "linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%)", backgroundSize: "200% 100%" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : documents.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {documents.map((doc) => (
             <div
               key={doc.id}
               className="flex items-center gap-4 bg-bg-surface rounded-lg px-5 py-4 transition-all hover:shadow-[var(--shadow-md)]"
@@ -43,10 +66,10 @@ export default function DocumentsPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
-                  {doc.type} &mdash; {doc.company}
+                  {docLabels[doc.type] ?? doc.type} &mdash; {doc.company}
                 </p>
                 <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>
-                  {doc.role} &middot; {formatRelativeDate(doc.date)}
+                  {doc.role} &middot; {formatRelativeDate(new Date(doc.createdAt))}
                 </p>
               </div>
 
