@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/infrastructure/supabase/server";
 import { SupabaseResumeRepository } from "@/lib/infrastructure/repositories/supabase-resume.repository";
 import { ResumeUseCases } from "@/lib/application/use-cases/resume";
-import { PDFParse } from "pdf-parse";
 import { randomUUID } from "crypto";
 
 function getStoragePathFromUrl(publicUrl: string): string | null {
@@ -62,6 +61,7 @@ export async function POST(request: NextRequest) {
 
   let parsedText: string | null = null;
   try {
+    const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: buffer });
     const textResult = await parser.getText();
     parsedText = textResult.text;
