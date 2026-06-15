@@ -8,12 +8,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   icon?: React.ReactNode;
+  static?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", loading, icon, children, disabled, ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", loading, icon, children, disabled, static: isStatic, ...props }, ref) => {
     const base =
-      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-120 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 disabled:opacity-40 disabled:pointer-events-none select-none";
+      "inline-flex items-center justify-center gap-2 font-medium transition-[scale,background-color,border-color,box-shadow] duration-120 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 disabled:opacity-40 disabled:pointer-events-none select-none";
+    const scaleClass = isStatic ? "" : "active:not-disabled:scale-[0.96]";
 
     const variants: Record<string, string> = {
       primary: "bg-accent text-white hover:brightness-[0.95] active:brightness-[0.90]",
@@ -31,7 +33,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={cn(base, variants[variant], sizes[size], className)}
+        className={cn(base, scaleClass, variants[variant], sizes[size], className)}
         disabled={disabled || loading}
         {...props}
       >

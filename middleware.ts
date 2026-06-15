@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/documents") ||
     pathname.startsWith("/resumes");
 
-  if (!user && (isProtectedPage || isRootPage)) {
+  if (!user && isProtectedPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
