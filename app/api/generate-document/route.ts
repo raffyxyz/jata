@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         messages: [
           { role: "system", content: prompt },
-          { role: "user", content: `Write a ${input.docType.replace("_", " ")} based on the instructions above.` },
+          { role: "user", content: input.docType === "apply_instructions" ? "Write the application following the instructions above." : `Write a ${input.docType.replace("_", " ")} based on the instructions above.` },
         ],
       }),
     }

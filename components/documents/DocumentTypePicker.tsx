@@ -1,8 +1,8 @@
 "use client";
 
-import { FileText, Mail, MessageCircle, Presentation } from "lucide-react";
+import { FileText, Mail, MessageCircle, Presentation, ClipboardList } from "lucide-react";
 
-type DocType = "cover-letter" | "cold-email" | "linkedin-dm" | "proposal";
+type DocType = "cover-letter" | "cold-email" | "linkedin-dm" | "proposal" | "apply-instructions";
 
 interface DocumentTypePickerProps {
   selected: DocType;
@@ -10,6 +10,7 @@ interface DocumentTypePickerProps {
 }
 
 const types: { value: DocType; label: string; icon: React.ElementType }[] = [
+  { value: "apply-instructions", label: "Apply Instructions", icon: ClipboardList },
   { value: "cover-letter", label: "Cover Letter", icon: FileText },
   { value: "cold-email", label: "Cold Email", icon: Mail },
   { value: "linkedin-dm", label: "LinkedIn DM", icon: MessageCircle },

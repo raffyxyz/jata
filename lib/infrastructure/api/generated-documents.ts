@@ -10,6 +10,7 @@ interface GenerateRequest {
   matchedKeywords: string[];
   resumeSummary: string;
   userTone: string;
+  applyInstructions?: string;
 }
 
 interface GenerateResponse {

@@ -16,6 +16,7 @@ export interface ParsedJobData {
   key_responsibilities: string[];
   industry_keywords: string[];
   red_flags: string[];
+  apply_instructions: string | null;
 }
 
 export interface ParseJobResult {

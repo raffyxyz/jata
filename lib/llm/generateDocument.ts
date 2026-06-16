@@ -1,4 +1,4 @@
-export type DocType = "cover_letter" | "cold_email" | "linkedin_dm" | "freelance_proposal";
+export type DocType = "cover_letter" | "cold_email" | "linkedin_dm" | "freelance_proposal" | "apply_instructions";
 
 export interface GenerateDocumentInput {
   docType: DocType;
@@ -9,9 +9,26 @@ export interface GenerateDocumentInput {
   matchedKeywords: string[];
   resumeSummary: string;
   userTone: string;
+  applyInstructions?: string;
 }
 
 const DOCUMENT_PROMPTS: Record<DocType, string> = {
+  apply_instructions: `
+You are an expert career coach writing on behalf of a job applicant.
+This job posting has specific application instructions. Follow them exactly and respond with the full application message as requested.
+
+Application instructions from the job posting:
+{apply_instructions}
+
+Applicant name: {name}
+Target role: {job_title} at {company}
+Resume summary: {resume_summary}
+Key responsibilities of the role: {key_responsibilities}
+Relevant strengths: {matched_keywords}
+Tone guidance: {user_tone}
+
+Write the application content following the instructions above. Do not include extra commentary or meta-text.
+`,
   cover_letter: `
 You are an expert career coach writing on behalf of a job applicant.
 Write a compelling cover letter that:
@@ -73,7 +90,8 @@ function interpolatePrompt(template: string, input: GenerateDocumentInput): stri
     .replace(/{key_responsibilities}/g, input.keyResponsibilities.join(", "))
     .replace(/{matched_keywords}/g, input.matchedKeywords.join(", "))
     .replace(/{resume_summary}/g, input.resumeSummary)
-    .replace(/{user_tone}/g, input.userTone);
+    .replace(/{user_tone}/g, input.userTone)
+    .replace(/{apply_instructions}/g, input.applyInstructions ?? "");
 }
 
 export function buildDocumentPrompt(input: GenerateDocumentInput): string {

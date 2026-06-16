@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Presentation,
   Save,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -32,16 +33,30 @@ import {
 } from "@/lib/infrastructure/api";
 import type { ResumeItem, ParsedJobData } from "@/lib/infrastructure/api";
 
-const docTypes: { value: DocType; label: string; icon: React.ElementType }[] = [
-  { value: "cover_letter", label: "Cover Letter", icon: FileText },
-  { value: "cold_email", label: "Cold Email", icon: Mail },
-  { value: "linkedin_dm", label: "LinkedIn DM", icon: MessageCircle },
-  {
-    value: "freelance_proposal",
-    label: "Freelance Proposal",
-    icon: Presentation,
-  },
-];
+function getDocTypes(
+  applyInstructions: string | null | undefined,
+): { value: DocType; label: string; icon: React.ElementType }[] {
+  const types: { value: DocType; label: string; icon: React.ElementType }[] = [
+    { value: "cover_letter", label: "Cover Letter", icon: FileText },
+    { value: "cold_email", label: "Cold Email", icon: Mail },
+    { value: "linkedin_dm", label: "LinkedIn DM", icon: MessageCircle },
+    {
+      value: "freelance_proposal",
+      label: "Freelance Proposal",
+      icon: Presentation,
+    },
+  ];
+
+  if (applyInstructions) {
+    types.unshift({
+      value: "apply_instructions",
+      label: "Apply Instructions",
+      icon: ClipboardList,
+    });
+  }
+
+  return types;
+}
 
 const tones = ["Formal", "Balanced", "Conversational"];
 
@@ -190,6 +205,7 @@ export default function NewApplicationPage() {
         matchedKeywords: atsResult.matched_keywords,
         resumeSummary: resume.parsedText.slice(0, 1500),
         userTone: tone,
+        applyInstructions: parsedJob.apply_instructions ?? undefined,
       });
 
       let displayed = "";
@@ -807,7 +823,7 @@ export default function NewApplicationPage() {
           </h3>
 
           <div className="flex gap-1 flex-wrap">
-            {docTypes.map((dt) => {
+            {getDocTypes(parsedJob?.apply_instructions).map((dt) => {
               const active = docType === dt.value;
               const Icon = dt.icon;
               return (
@@ -878,7 +894,7 @@ export default function NewApplicationPage() {
           >
             {generating
               ? "Generating..."
-              : `Generate ${docType === "cover_letter" ? "Cover Letter" : docType === "cold_email" ? "Cold Email" : docType === "linkedin_dm" ? "LinkedIn DM" : "Proposal"}`}
+              : `Generate ${docType === "cover_letter" ? "Cover Letter" : docType === "cold_email" ? "Cold Email" : docType === "linkedin_dm" ? "LinkedIn DM" : docType === "freelance_proposal" ? "Proposal" : "Application"}`}
           </Button>
 
           {(docContent || generating) && (

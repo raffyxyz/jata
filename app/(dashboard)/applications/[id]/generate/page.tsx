@@ -10,6 +10,7 @@ import { DocumentOutput } from "@/components/documents/DocumentOutput";
 import { toast } from "@/components/ui/Toast";
 
 const docTypeMap: Record<PickerDocType, string> = {
+  "apply-instructions": "apply_instructions",
   "cover-letter": "cover_letter",
   "cold-email": "cold_email",
   "linkedin-dm": "linkedin_dm",
@@ -97,7 +98,7 @@ export default function GeneratePage() {
         Generate Documents
       </h1>
       <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4, marginBottom: 24 }}>
-        Application &middot; {docType === "cover-letter" ? "Cover Letter" : docType === "cold-email" ? "Cold Email" : docType === "linkedin-dm" ? "LinkedIn DM" : "Proposal"}
+        Application &middot; {docType === "apply-instructions" ? "Apply Instructions" : docType === "cover-letter" ? "Cover Letter" : docType === "cold-email" ? "Cold Email" : docType === "linkedin-dm" ? "LinkedIn DM" : "Proposal"}
       </p>
 
       <DocumentTypePicker selected={docType} onSelect={setDocType} />
@@ -132,7 +133,7 @@ export default function GeneratePage() {
         onClick={handleGenerate}
         loading={generating}
       >
-        {generating ? "Generating..." : `Generate ${docType === "cover-letter" ? "Cover Letter" : docType === "cold-email" ? "Cold Email" : docType === "linkedin-dm" ? "LinkedIn DM" : "Proposal"}`}
+        {generating ? "Generating..." : `Generate ${docType === "apply-instructions" ? "Application" : docType === "cover-letter" ? "Cover Letter" : docType === "cold-email" ? "Cold Email" : docType === "linkedin-dm" ? "LinkedIn DM" : "Proposal"}`}
       </Button>
 
       <DocumentOutput
