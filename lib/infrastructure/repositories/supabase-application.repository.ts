@@ -125,6 +125,15 @@ export class SupabaseApplicationRepository implements ApplicationRepository {
     return mapped;
   }
 
+  async removeResumeReference(resumeId: string): Promise<void> {
+    const { error } = await this.client
+      .from("applications")
+      .update({ resume_id: null })
+      .eq("resume_id", resumeId);
+
+    if (error) throw new Error(error.message);
+  }
+
   async delete(id: string): Promise<void> {
     const { error } = await this.client
       .from("applications")
@@ -152,7 +161,7 @@ function mapApplication(data: Record<string, unknown>): Application {
   return {
     id: data.id as string,
     userId: data.user_id as string,
-    resumeId: data.resume_id as string,
+    resumeId: data.resume_id as string | null,
     company: data.company as string,
     jobTitle: data.job_title as string,
     jobDescription: data.job_description as string,

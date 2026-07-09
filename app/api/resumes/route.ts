@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/infrastructure/supabase/server";
 import { SupabaseResumeRepository } from "@/lib/infrastructure/repositories/supabase-resume.repository";
+import { SupabaseApplicationRepository } from "@/lib/infrastructure/repositories/supabase-application.repository";
 import { ResumeUseCases } from "@/lib/application/use-cases/resume";
 import { randomUUID } from "crypto";
 
@@ -124,6 +125,9 @@ export async function DELETE(request: NextRequest) {
   if (storagePath) {
     await supabase.storage.from("resumes").remove([storagePath]);
   }
+
+  const appRepo = new SupabaseApplicationRepository(supabase);
+  await appRepo.removeResumeReference(id);
 
   await repo.delete(id);
 

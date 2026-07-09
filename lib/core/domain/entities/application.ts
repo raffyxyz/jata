@@ -3,7 +3,7 @@ export type ApplicationStatus = "draft" | "applied" | "interview" | "offer" | "r
 export interface Application {
   id: string;
   userId: string;
-  resumeId: string;
+  resumeId: string | null;
   company: string;
   jobTitle: string;
   jobDescription: string;

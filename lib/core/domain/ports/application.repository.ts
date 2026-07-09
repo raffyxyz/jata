@@ -24,4 +24,5 @@ export interface ApplicationRepository {
   ): Promise<Application>;
   updateStatus(id: string, status: string): Promise<Application>;
   delete(id: string): Promise<void>;
+  removeResumeReference(resumeId: string): Promise<void>;
 }
