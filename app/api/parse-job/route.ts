@@ -22,7 +22,7 @@ For "apply_instructions", look for a section titled "How to apply" or instructio
 
 export async function POST(request: Request) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const apiToken = process.env.CLOUDFLARE_WORKERS_TOKEN;
 
   if (!accountId || !apiToken) {
     return Response.json(

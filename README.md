@@ -66,7 +66,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-anon-key
 
 # Cloudflare Workers AI
 CLOUDFLARE_ACCOUNT_ID=your-account-id
-CLOUDFLARE_API_TOKEN=your-api-token
+CLOUDFLARE_WORKERS_TOKEN=your-api-token
 ```
 
 ### Install & Run
