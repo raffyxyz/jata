@@ -62,11 +62,10 @@ export async function POST(request: NextRequest) {
 
   let parsedText: string | null = null;
   try {
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: buffer });
-    const textResult = await parser.getText();
-    parsedText = textResult.text;
-    await parser.destroy();
+    const { extractText, getDocumentProxy } = await import("unpdf");
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true });
+    parsedText = text;
   } catch {
     // PDF parsing failed — save resume without extracted text
   }
