@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Upload,
@@ -23,15 +23,15 @@ import type { WeakSection } from "@/components/applications/ATSResultCard";
 import { toast } from "@/components/ui/Toast";
 import type { AtsScoreResult } from "@/lib/core/domain/entities/ats-score";
 import type { DocType } from "@/lib/llm/generateDocument";
+import { useResumes, useUploadResume } from "@/lib/presentation/hooks/useResumes";
 import {
-  fetchResumes,
   parseJob,
   getAtsScore,
   generateDocument,
   saveGeneratedDocument,
   saveApplication,
 } from "@/lib/infrastructure/api";
-import type { ResumeItem, ParsedJobData } from "@/lib/infrastructure/api";
+import type { ParsedJobData } from "@/lib/infrastructure/api";
 
 function getDocTypes(
   applyInstructions: string | null | undefined,
@@ -78,8 +78,9 @@ export default function NewApplicationPage() {
   const [jobDesc, setJobDesc] = useState("");
   const [jobUrl, setJobUrl] = useState("");
   const [selectedResume, setSelectedResume] = useState<string | null>(null);
-  const [resumes, setResumes] = useState<ResumeItem[]>([]);
-  const [resumesLoading, setResumesLoading] = useState(true);
+
+  const { data: resumes = [], isLoading: resumesLoading } = useResumes();
+  const uploadMutation = useUploadResume();
 
   const [analyzing, setAnalyzing] = useState(false);
   const [atsResult, setAtsResult] = useState<AtsScoreResult | null>(null);
@@ -92,24 +93,8 @@ export default function NewApplicationPage() {
   const [streaming, setStreaming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showReview, setShowReview] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const loadResumes = useCallback(async () => {
-    try {
-      const data = await fetchResumes();
-      setResumes(data);
-    } catch {
-      toast("error", "Failed to load resumes");
-    } finally {
-      setResumesLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadResumes();
-  }, [loadResumes]);
 
   useEffect(() => {
     return () => {
@@ -119,7 +104,7 @@ export default function NewApplicationPage() {
     };
   }, []);
 
-  const handleUploadResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadResume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -133,30 +118,17 @@ export default function NewApplicationPage() {
       return;
     }
 
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/resumes", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Upload failed");
-      }
-
-      toast("success", "Resume uploaded successfully");
-      await loadResumes();
-    } catch (err) {
-      toast("error", err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    uploadMutation.mutate(file, {
+      onSuccess: () => {
+        toast("success", "Resume uploaded successfully");
+      },
+      onError: (err) => {
+        toast("error", err.message);
+      },
+      onSettled: () => {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+    });
   };
 
   const handleRunAts = async () => {
@@ -497,7 +469,7 @@ export default function NewApplicationPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                disabled={uploadMutation.isPending}
                 className="flex flex-col items-center justify-center gap-2 p-4 transition-all"
                 style={{
                   borderRadius: "var(--radius-lg)",

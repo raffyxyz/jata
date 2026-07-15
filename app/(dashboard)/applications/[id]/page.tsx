@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ExternalLink, Sparkles, FileText, Pencil, Mail, MessageCircle, Presentation, ChevronDown, ChevronUp } from "lucide-react";
@@ -8,25 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ScorePill } from "@/components/ui/ScorePill";
 import { Card } from "@/components/ui/Card";
-
-interface DocumentData {
-  id: string;
-  type: string;
-  content: string;
-  createdAt: string;
-}
-
-interface ApplicationDetail {
-  id: string;
-  company: string;
-  role: string;
-  jobDescription: string;
-  jobUrl: string | null;
-  score: number;
-  status: string;
-  dateAdded: string;
-  documents: DocumentData[];
-}
+import { useApplication } from "@/lib/presentation/hooks/useApplications";
 
 const docLabels: Record<string, { label: string; icon: React.ElementType }> = {
   cover_letter: { label: "Cover Letter", icon: FileText },
@@ -50,28 +32,10 @@ export default function ApplicationDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const [application, setApplication] = useState<ApplicationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { data: application, isLoading, isError } = useApplication(id);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`/api/applications/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Not found");
-        return res.json();
-      })
-      .then((data) => {
-        setApplication(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
-  }, [id]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div>
         <div className="mb-6 h-4 w-32 bg-bg-muted rounded animate-skeleton" />
@@ -89,7 +53,7 @@ export default function ApplicationDetailPage({
     );
   }
 
-  if (error || !application) {
+  if (isError || !application) {
     return (
       <div>
         <Link

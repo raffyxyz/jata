@@ -1,6 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ApplicationData } from "@/components/applications/ApplicationRow";
 
+interface ApplicationDetail {
+  id: string;
+  company: string;
+  role: string;
+  jobDescription: string;
+  jobUrl: string | null;
+  score: number;
+  status: string;
+  dateAdded: string;
+  documents: {
+    id: string;
+    type: string;
+    content: string;
+    createdAt: string;
+  }[];
+}
+
 async function fetchApplications(): Promise<ApplicationData[]> {
   const res = await fetch("/api/applications");
   if (!res.ok) throw new Error("Failed to fetch applications");
@@ -13,10 +30,23 @@ async function fetchApplications(): Promise<ApplicationData[]> {
   );
 }
 
+async function fetchApplication(id: string): Promise<ApplicationDetail> {
+  const res = await fetch(`/api/applications/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch application");
+  return res.json();
+}
+
 export function useApplications() {
   return useQuery<ApplicationData[]>({
     queryKey: ["applications"],
     queryFn: fetchApplications,
+  });
+}
+
+export function useApplication(id: string) {
+  return useQuery<ApplicationDetail>({
+    queryKey: ["applications", id],
+    queryFn: () => fetchApplication(id),
   });
 }
 

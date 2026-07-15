@@ -1,18 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useRef } from "react";
 import { FileText, Plus, Trash2, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
-
-interface Resume {
-  id: string;
-  userId: string;
-  name: string | null;
-  fileUrl: string;
-  parsedText: string | null;
-  createdAt: string;
-}
+import { useResumes, useUploadResume, useDeleteResume } from "@/lib/presentation/hooks/useResumes";
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -24,30 +16,12 @@ function formatDate(iso: string): string {
 }
 
 export default function ResumesPage() {
-  const [resumes, setResumes] = useState<Resume[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { data: resumes = [], isLoading } = useResumes();
+  const uploadMutation = useUploadResume();
+  const deleteMutation = useDeleteResume();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchResumes = useCallback(async () => {
-    try {
-      const res = await fetch("/api/resumes");
-      if (!res.ok) throw new Error("Failed to fetch resumes");
-      const data = await res.json();
-      setResumes(data);
-    } catch {
-      toast("error", "Failed to load resumes");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchResumes();
-  }, [fetchResumes]);
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -61,50 +35,28 @@ export default function ResumesPage() {
       return;
     }
 
-    setUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/resumes", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Upload failed");
-      }
-
-      toast("success", "Resume uploaded successfully");
-      await fetchResumes();
-    } catch (err) {
-      toast("error", err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    uploadMutation.mutate(file, {
+      onSuccess: () => {
+        toast("success", "Resume uploaded successfully");
+      },
+      onError: (err) => {
+        toast("error", err.message);
+      },
+      onSettled: () => {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+    });
   };
 
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-
-    try {
-      const res = await fetch(`/api/resumes?id=${id}`, { method: "DELETE" });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Delete failed");
-      }
-
-      toast("success", "Resume deleted");
-      setResumes((prev) => prev.filter((r) => r.id !== id));
-    } catch (err) {
-      toast("error", err instanceof Error ? err.message : "Delete failed");
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        toast("success", "Resume deleted");
+      },
+      onError: (err) => {
+        toast("error", err.message);
+      },
+    });
   };
 
   return (
@@ -118,11 +70,11 @@ export default function ResumesPage() {
           Resumes
         </h1>
         <Button
-          icon={uploading ? undefined : <Upload size={16} />}
-          loading={uploading}
+          icon={uploadMutation.isPending ? undefined : <Upload size={16} />}
+          loading={uploadMutation.isPending}
           onClick={() => fileInputRef.current?.click()}
         >
-          {uploading ? "Uploading..." : "Upload Resume"}
+          {uploadMutation.isPending ? "Uploading..." : "Upload Resume"}
         </Button>
       </div>
 
@@ -135,7 +87,7 @@ export default function ResumesPage() {
       />
 
       {/* Loading state */}
-      {loading && (
+      {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
@@ -152,7 +104,7 @@ export default function ResumesPage() {
       )}
 
       {/* Grid */}
-      {!loading && (
+      {!isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {resumes.map((r) => (
             <div
@@ -174,12 +126,12 @@ export default function ResumesPage() {
                 </a>
                 <button
                   onClick={() => handleDelete(r.id)}
-                  disabled={deletingId === r.id}
+                  disabled={deleteMutation.isPending}
                   className="flex items-center justify-center text-text-tertiary hover:text-danger hover:bg-danger-subtle transition-all disabled:opacity-40"
                   style={{ width: 28, height: 28, borderRadius: "var(--radius-sm)" }}
                   title="Delete"
                 >
-                  {deletingId === r.id ? (
+                  {deleteMutation.isPending ? (
                     <svg className="animate-spin size-3.5" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
                       <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -227,7 +179,7 @@ export default function ResumesPage() {
           {/* Upload new card */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploadMutation.isPending}
             className="flex flex-col items-center justify-center gap-3 bg-bg-surface rounded-lg p-5 border-2 border-dashed transition-all hover:bg-bg-muted disabled:opacity-40"
             style={{
               borderRadius: "var(--radius-lg)",
@@ -235,7 +187,7 @@ export default function ResumesPage() {
               minHeight: 160,
             }}
           >
-            {uploading ? (
+            {uploadMutation.isPending ? (
               <svg className="animate-spin size-6" viewBox="0 0 24 24" fill="none" style={{ color: "var(--text-tertiary)" }}>
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
                 <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -245,7 +197,7 @@ export default function ResumesPage() {
             )}
             <div>
               <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
-                {uploading ? "Uploading..." : "Upload new resume"}
+                {uploadMutation.isPending ? "Uploading..." : "Upload new resume"}
               </p>
               <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>
                 PDF up to 5MB
@@ -256,7 +208,7 @@ export default function ResumesPage() {
       )}
 
       {/* Empty state */}
-      {!loading && resumes.length === 0 && (
+      {!isLoading && resumes.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20">
           <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
             <rect x="14" y="10" width="52" height="60" rx="6" stroke="var(--border)" strokeWidth="2" fill="none" />
@@ -278,7 +230,7 @@ export default function ResumesPage() {
           </p>
           <Button
             icon={<Upload size={16} />}
-            loading={uploading}
+            loading={uploadMutation.isPending}
             onClick={() => fileInputRef.current?.click()}
           >
             Upload Resume
