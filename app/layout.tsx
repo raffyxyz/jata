@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/presentation/auth/AuthContext";
 import { QueryProvider } from "@/lib/presentation/query/QueryProvider";
+import { ThemeProvider } from "@/lib/presentation/theme/ThemeContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -40,12 +41,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
       <body>
-        <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

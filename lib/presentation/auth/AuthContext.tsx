@@ -17,6 +17,7 @@ interface AuthContextType {
   session: AuthSession | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -53,6 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authUseCases.login(email, password);
   }, []);
 
+  const loginWithGoogle = useCallback(async () => {
+    const url = await authUseCases.loginWithGoogle();
+    window.location.href = url;
+  }, []);
+
   const logout = useCallback(async () => {
     await authUseCases.logout();
     setUser(null);
@@ -60,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, session, isLoading, login, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

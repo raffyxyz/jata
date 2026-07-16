@@ -1,4 +1,4 @@
-import type { AuthRepository } from "@/lib/core/domain/ports/auth.repository";
+import type { AuthRepository, UpdateProfileParams } from "@/lib/core/domain/ports/auth.repository";
 import type { AuthSession, AuthUser } from "@/lib/core/domain/entities/auth";
 import { createClient } from "@/lib/infrastructure/supabase/client";
 import type { SupabaseClient, User, Session } from "@supabase/supabase-js";
@@ -27,6 +27,21 @@ export class SupabaseAuthRepository implements AuthRepository {
 
   constructor() {
     this.client = createClient();
+  }
+
+  async signInWithOAuth(provider: "google"): Promise<string> {
+    const { data, error } = await this.client.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data.url;
   }
 
   async signIn(email: string, password: string): Promise<AuthSession> {
@@ -70,6 +85,22 @@ export class SupabaseAuthRepository implements AuthRepository {
     const { data, error } = await this.client.auth.getUser();
 
     if (error || !data.user) return null;
+
+    return mapUser(data.user);
+  }
+
+  async updateProfile(params: UpdateProfileParams): Promise<AuthUser> {
+    const { data, error } = await this.client.auth.updateUser({
+      data: { name: params.name },
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data.user) {
+      throw new Error("No user returned from profile update");
+    }
 
     return mapUser(data.user);
   }

@@ -12,11 +12,16 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = pathname === "/login";
   const isRootPage = pathname === "/";
+  const isOAuthCallback = pathname === "/auth/callback";
   const isProtectedPage =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/applications") ||
     pathname.startsWith("/documents") ||
     pathname.startsWith("/resumes");
+
+  if (isOAuthCallback) {
+    return supabaseResponse;
+  }
 
   if (!user && isProtectedPage) {
     const url = request.nextUrl.clone();

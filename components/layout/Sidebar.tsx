@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Briefcase, FileText, FolderOpen, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, FileText, FolderOpen, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/presentation/auth/AuthContext";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/applications", label: "Applications", icon: Briefcase },
   { href: "/resumes", label: "Resumes", icon: FileText },
   { href: "/documents", label: "Documents", icon: FolderOpen },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 function getInitials(email: string): string {

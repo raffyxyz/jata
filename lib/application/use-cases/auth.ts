@@ -8,6 +8,10 @@ export class AuthUseCases {
     return this.repository.signIn(email, password);
   }
 
+  async loginWithGoogle(): Promise<string> {
+    return this.repository.signInWithOAuth("google");
+  }
+
   async logout(): Promise<void> {
     await this.repository.signOut();
   }
@@ -18,6 +22,10 @@ export class AuthUseCases {
 
   async getCurrentUser(): Promise<AuthUser | null> {
     return this.repository.getCurrentUser();
+  }
+
+  async updateDisplayName(name: string): Promise<AuthUser> {
+    return this.repository.updateProfile({ name });
   }
 
   onAuthStateChange(callback: (session: AuthSession | null) => void): () => void {
