@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, ChevronDown } from "lucide-react";
+import { Plus, Search, ChevronDown, Calendar, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { ApplicationTable } from "@/components/applications/ApplicationTable";
@@ -20,6 +20,7 @@ export default function ApplicationsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
+  const [dateFilter, setDateFilter] = useState("");
   const [page, setPage] = useState(1);
   const perPage = 10;
 
@@ -28,7 +29,10 @@ export default function ApplicationsPage() {
       const q = search.toLowerCase();
       const matchesSearch = a.company.toLowerCase().includes(q) || a.role.toLowerCase().includes(q);
       const matchesStatus = statusFilter === "All" || a.status === statusFilter.toLowerCase();
-      return matchesSearch && matchesStatus;
+      const matchesDate =
+        !dateFilter ||
+        a.dateAdded.toISOString().slice(0, 10) === dateFilter;
+      return matchesSearch && matchesStatus && matchesDate;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -60,7 +64,7 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         {/* Search */}
         <div className="relative w-full sm:w-[280px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
@@ -102,6 +106,26 @@ export default function ApplicationsPage() {
             ))}
           </select>
           <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+        </div>
+
+        {/* Date filter */}
+        <div className="relative">
+          <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
+            className="h-9 bg-bg-muted border border-border rounded-md pl-9 pr-8 text-sm text-text-primary appearance-none cursor-pointer focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,126,247,0.12)] transition-all duration-120"
+            style={{ fontSize: 13, colorScheme: "inherit" }}
+          />
+          {dateFilter && (
+            <button
+              onClick={() => { setDateFilter(""); setPage(1); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
