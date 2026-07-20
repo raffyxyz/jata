@@ -1,4 +1,4 @@
-const CF_API = "https://api.cloudflare.com/client/v4/accounts";
+import { getProviderById } from "@/lib/llm/provider";
 
 const ATS_SCORE_PROMPT = `
 You are an ATS (Applicant Tracking System) scanner and senior recruiter.
@@ -29,41 +29,20 @@ Return ONLY a valid JSON object.
 `;
 
 export async function POST(request: Request) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_WORKERS_TOKEN;
+  const { parsedJD, resumeText, providerId } = await request.json();
 
-  if (!accountId || !apiToken) {
-    return Response.json(
-      { error: "Cloudflare credentials not configured" },
-      { status: 500 }
-    );
-  }
+  const provider = getProviderById(providerId ?? "cloudflare");
 
-  const { parsedJD, resumeText } = await request.json();
-
-  const res = await fetch(
-    `${CF_API}/${accountId}/ai/run/@cf/google/gemma-4-26b-a4b-it`,
+  const content = await provider.chat([
     {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content: `${ATS_SCORE_PROMPT}\n\nJob analysis: ${parsedJD}\nResume text: ${resumeText}`,
-          },
-          {
-            role: "user",
-            content: "Score this resume against the job description.",
-          },
-        ],
-      }),
-    }
-  );
+      role: "system",
+      content: `${ATS_SCORE_PROMPT}\n\nJob analysis: ${parsedJD}\nResume text: ${resumeText}`,
+    },
+    {
+      role: "user",
+      content: "Score this resume against the job description.",
+    },
+  ]);
 
-  const data = await res.json();
-  return Response.json(data);
+  return Response.json({ content });
 }

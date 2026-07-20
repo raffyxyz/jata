@@ -1,4 +1,4 @@
-const CF_API = "https://api.cloudflare.com/client/v4/accounts";
+import { getProviderById } from "@/lib/llm/provider";
 
 const JD_PARSE_PROMPT = `
 You are an expert recruiter. Analyze this job description and extract the following.
@@ -21,35 +21,14 @@ For "apply_instructions", look for a section titled "How to apply" or instructio
 `;
 
 export async function POST(request: Request) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_WORKERS_TOKEN;
+  const { jobDescription, providerId } = await request.json();
 
-  if (!accountId || !apiToken) {
-    return Response.json(
-      { error: "Cloudflare credentials not configured" },
-      { status: 500 }
-    );
-  }
+  const provider = getProviderById(providerId ?? "cloudflare");
 
-  const { jobDescription } = await request.json();
+  const content = await provider.chat([
+    { role: "system", content: JD_PARSE_PROMPT },
+    { role: "user", content: jobDescription },
+  ]);
 
-  const res = await fetch(
-    `${CF_API}/${accountId}/ai/run/@cf/google/gemma-4-26b-a4b-it`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: "system", content: JD_PARSE_PROMPT },
-          { role: "user", content: jobDescription },
-        ],
-      }),
-    }
-  );
-
-  const data = await res.json();
-  return Response.json(data);
+  return Response.json({ content });
 }

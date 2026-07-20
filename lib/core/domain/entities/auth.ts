@@ -3,6 +3,7 @@ export interface AuthUser {
   email: string;
   name: string | null;
   avatarUrl: string | null;
+  aiProvider: string | null;
   createdAt: string;
 }
 

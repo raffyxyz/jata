@@ -9,6 +9,7 @@ function mapUser(user: User): AuthUser {
     email: user.email ?? "",
     name: user.user_metadata?.name ?? null,
     avatarUrl: user.user_metadata?.avatar_url ?? null,
+    aiProvider: user.user_metadata?.ai_provider ?? null,
     createdAt: user.created_at,
   };
 }
@@ -91,7 +92,10 @@ export class SupabaseAuthRepository implements AuthRepository {
 
   async updateProfile(params: UpdateProfileParams): Promise<AuthUser> {
     const { data, error } = await this.client.auth.updateUser({
-      data: { name: params.name },
+      data: {
+        name: params.name,
+        ...(params.aiProvider !== undefined && { ai_provider: params.aiProvider }),
+      },
     });
 
     if (error) {

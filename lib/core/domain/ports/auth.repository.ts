@@ -2,6 +2,7 @@ import type { AuthSession, AuthUser } from "@/lib/core/domain/entities/auth";
 
 export interface UpdateProfileParams {
   name: string;
+  aiProvider?: string;
 }
 
 export interface AuthRepository {

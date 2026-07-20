@@ -14,14 +14,19 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name } = body;
+  const { name, aiProvider } = body;
 
   if (typeof name !== "string") {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
+  const updateData: Record<string, string> = { name };
+  if (aiProvider !== undefined) {
+    updateData.ai_provider = aiProvider;
+  }
+
   const { data, error } = await supabase.auth.updateUser({
-    data: { name },
+    data: updateData,
   });
 
   if (error) {
@@ -33,6 +38,7 @@ export async function PATCH(request: NextRequest) {
     email: data.user.email ?? "",
     name: data.user.user_metadata?.name ?? null,
     avatarUrl: data.user.user_metadata?.avatar_url ?? null,
+    aiProvider: data.user.user_metadata?.ai_provider ?? null,
     createdAt: data.user.created_at,
   });
 }

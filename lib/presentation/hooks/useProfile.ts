@@ -1,11 +1,16 @@
 import { useMutation } from "@tanstack/react-query";
 import type { AuthUser } from "@/lib/core/domain/entities/auth";
 
-async function updateProfile(name: string): Promise<AuthUser> {
+interface UpdateProfileParams {
+  name: string;
+  aiProvider?: string;
+}
+
+async function updateProfile(params: UpdateProfileParams): Promise<AuthUser> {
   const res = await fetch("/api/user/profile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(params),
   });
   if (!res.ok) throw new Error("Failed to update profile");
   return res.json();
@@ -13,6 +18,6 @@ async function updateProfile(name: string): Promise<AuthUser> {
 
 export function useUpdateProfile() {
   return useMutation({
-    mutationFn: (name: string) => updateProfile(name),
+    mutationFn: (params: UpdateProfileParams) => updateProfile(params),
   });
 }

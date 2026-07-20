@@ -11,12 +11,7 @@ interface GenerateRequest {
   resumeSummary: string;
   userTone: string;
   applyInstructions?: string;
-}
-
-interface GenerateResponse {
-  result: {
-    choices: { message: { content: string } }[];
-  };
+  providerId?: string;
 }
 
 interface SaveGeneratedDocRequest {
@@ -28,12 +23,11 @@ interface SaveGeneratedDocRequest {
 export async function generateDocument(
   params: GenerateRequest,
 ): Promise<string> {
-  const data = await apiPost<GenerateResponse>(
+  const data = await apiPost<{ content: string }>(
     "/api/generate-document",
     params,
   );
-  const raw = data.result.choices[0].message.content;
-  return raw.replace(/^\n+/, "");
+  return data.content.replace(/^\n+/, "");
 }
 
 export async function saveGeneratedDocument(

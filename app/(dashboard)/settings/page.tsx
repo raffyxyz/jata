@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/lib/presentation/auth/AuthContext";
 import { useUpdateProfile } from "@/lib/presentation/hooks/useProfile";
+import { useAiProviders } from "@/lib/presentation/hooks/useAiProviders";
 import { useDeleteAccount } from "@/lib/presentation/hooks/useDeleteAccount";
 import { useTheme, type Theme } from "@/lib/presentation/theme/ThemeContext";
 import { toast } from "@/components/ui/Toast";
@@ -258,9 +259,10 @@ function DeleteAccountZone() {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const updateProfile = useUpdateProfile();
   const { theme, setTheme } = useTheme();
+  const { data: availableProviders } = useAiProviders();
 
   const [displayName, setDisplayName] = useState(user?.name ?? "");
 
@@ -321,14 +323,17 @@ export default function SettingsPage() {
                       ) : undefined
                     }
                     onClick={() =>
-                      updateProfile.mutate(displayName.trim(), {
-                        onSuccess: (updatedUser) => {
-                          setDisplayName(updatedUser.name ?? "");
-                          toast("success", "Display name updated");
+                      updateProfile.mutate(
+                        { name: displayName.trim() },
+                        {
+                          onSuccess: (updatedUser) => {
+                            setDisplayName(updatedUser.name ?? "");
+                            toast("success", "Display name updated");
+                          },
+                          onError: () =>
+                            toast("error", "Failed to update display name"),
                         },
-                        onError: () =>
-                          toast("error", "Failed to update display name"),
-                      })
+                      )
                     }
                   >
                     {updateProfile.isPending ? "Saved" : "Save"}
@@ -440,6 +445,29 @@ export default function SettingsPage() {
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                     <option value="system">System</option>
+                  </select>
+                </SettingRow>
+
+                <SettingRow
+                  label="AI provider"
+                  description="Select which AI service powers document generation and ATS scoring."
+                >
+                  <select
+                    className="h-8 px-2 text-xs rounded-md border border-border bg-bg-muted text-text-primary focus:outline-none focus:border-accent"
+                    style={{ fontFamily: "var(--font-inter)" }}
+                    value={user?.aiProvider ?? "cloudflare"}
+                    onChange={(e) =>
+                      updateProfile.mutate(
+                        { name: displayName.trim(), aiProvider: e.target.value },
+                        { onSuccess: () => refreshUser() },
+                      )
+                    }
+                  >
+                    {availableProviders?.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
                   </select>
                 </SettingRow>
 

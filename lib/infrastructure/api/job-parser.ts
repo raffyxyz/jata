@@ -1,11 +1,5 @@
 import { apiPost } from "./client";
 
-export interface ParseJobResponse {
-  result: {
-    choices: { message: { content: string } }[];
-  };
-}
-
 export interface ParsedJobData {
   job_title: string;
   seniority_level: string;
@@ -26,11 +20,13 @@ export interface ParseJobResult {
 
 export async function parseJob(
   jobDescription: string,
+  providerId?: string,
 ): Promise<ParseJobResult> {
-  const data = await apiPost<ParseJobResponse>("/api/parse-job", {
+  const data = await apiPost<{ content: string }>("/api/parse-job", {
     jobDescription,
+    providerId,
   });
-  const raw = data.result.choices[0].message.content;
+  const raw = data.content;
   const cleaned = raw.replace(/```json\s*|\s*```/g, "");
   const parsed = JSON.parse(cleaned) as ParsedJobData;
   return { parsed, raw };
