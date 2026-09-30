@@ -874,6 +874,7 @@ export default function NewApplicationPage() {
               <DocumentOutput
                 content={docContent}
                 streaming={streaming}
+                onChange={setDocContent}
                 onCopy={() => {
                   navigator.clipboard.writeText(docContent);
                   toast("success", "Copied to clipboard");

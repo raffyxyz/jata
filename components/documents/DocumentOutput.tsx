@@ -1,17 +1,29 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Copy, RefreshCw, Save } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface DocumentOutputProps {
   content: string;
   streaming: boolean;
+  onChange: (content: string) => void;
   onCopy: () => void;
   onRegenerate: () => void;
   onSave: () => void;
 }
 
-function DocumentOutput({ content, streaming, onCopy, onRegenerate, onSave }: DocumentOutputProps) {
+function DocumentOutput({ content, streaming, onChange, onCopy, onRegenerate, onSave }: DocumentOutputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Grow to fit the content so it reads as a document rather than a scroll box.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [content]);
+
   return (
     <div className="mt-6">
       {/* Toolbar */}
@@ -39,16 +51,27 @@ function DocumentOutput({ content, streaming, onCopy, onRegenerate, onSave }: Do
           color: "var(--text-primary)",
         }}
       >
-        {content ? (
-          <p style={{ whiteSpace: "pre-wrap" }}>{content}</p>
-        ) : streaming ? (
+        {streaming && !content ? (
           <div className="flex items-center gap-1">
             <span className="animate-cursor-blink text-accent" style={{ fontSize: 20 }}>|</span>
           </div>
         ) : (
-          <p style={{ color: "var(--text-tertiary)" }}>
-            Generated content will appear here...
-          </p>
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => onChange(e.target.value)}
+            readOnly={streaming}
+            rows={1}
+            aria-label="Generated document"
+            placeholder="Generated content will appear here..."
+            className="block w-full resize-none overflow-hidden border-0 bg-transparent p-0 caret-accent placeholder:text-text-tertiary focus:outline-none focus-visible:outline-none"
+            style={{
+              lineHeight: "inherit",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              color: "inherit",
+            }}
+          />
         )}
       </div>
     </div>

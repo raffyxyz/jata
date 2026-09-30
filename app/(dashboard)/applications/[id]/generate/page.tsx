@@ -139,6 +139,7 @@ export default function GeneratePage() {
       <DocumentOutput
         content={content}
         streaming={streaming}
+        onChange={setContent}
         onCopy={() => {
           navigator.clipboard.writeText(content);
           toast("success", "Copied to clipboard");
