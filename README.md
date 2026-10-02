@@ -2,6 +2,18 @@
 
 JATA is a full-stack web application that helps job seekers organize, analyze, and optimize their job applications. It combines a clean application tracker with AI-powered ATS scoring and document generation.
 
+## Screenshots
+
+![Screenshot 1](screenshots/1.png)
+
+![Screenshot 2](screenshots/2.png)
+
+![Screenshot 3](screenshots/3.png)
+
+![Screenshot 4](screenshots/4.png)
+
+![Screenshot 5](screenshots/5.png)
+
 ## Features
 
 - **Dashboard** — Overview of total applications, average ATS score, in-progress count, weekly activity, and score distribution.
@@ -9,7 +21,6 @@ JATA is a full-stack web application that helps job seekers organize, analyze, a
 - **ATS Scoring** — Paste a job description and get an AI-powered compatibility score with keyword/skills matching, weak section analysis, and improvement suggestions.
 - **Resume Management** — Upload PDF resumes (up to 5MB), auto-extract text via `pdf-parse`, preview, and delete. Files stored in Supabase Storage.
 - **Document Generation** — Generate tailored cover letters, cold emails, LinkedIn DMs, and freelance proposals using Cloudflare Workers AI, based on your resume and the target job description.
-- **Optimization** — Side-by-side editor to rewrite your resume using ATS insights, with a real-time score recheck.
 
 ## Tech Stack
 
