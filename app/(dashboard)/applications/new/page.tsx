@@ -195,7 +195,7 @@ export default function NewApplicationPage() {
           setGenerating(false);
           setStreaming(false);
         }
-      }, 12);
+      }, 8);
     } catch {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -874,7 +874,9 @@ export default function NewApplicationPage() {
               <DocumentOutput
                 content={docContent}
                 streaming={streaming}
-                onChange={setDocContent}
+                onChange={(newContent) => {
+                  setDocContent(newContent);
+                }}
                 onCopy={() => {
                   navigator.clipboard.writeText(docContent);
                   toast("success", "Copied to clipboard");

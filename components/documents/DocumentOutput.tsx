@@ -16,10 +16,14 @@ interface DocumentOutputProps {
 function DocumentOutput({ content, streaming, onChange, onCopy, onRegenerate, onSave }: DocumentOutputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+
   // Grow to fit the content so it reads as a document rather than a scroll box.
   useEffect(() => {
     const el = textareaRef.current;
-    if (!el) return;
+    if (!el || !el.isConnected) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const scrollTop = el.scrollTop;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   }, [content]);
@@ -59,7 +63,17 @@ function DocumentOutput({ content, streaming, onChange, onCopy, onRegenerate, on
           <textarea
             ref={textareaRef}
             value={content}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              const el = e.target;
+              const start = el.selectionStart ?? 0;
+              const end = el.selectionEnd ?? 0;
+              const scrollTop = el.scrollTop;
+              onChange(e.target.value);
+              requestAnimationFrame(() => {
+                el.setSelectionRange(start, end);
+                el.scrollTop = scrollTop;
+              });
+            }}
             readOnly={streaming}
             rows={1}
             aria-label="Generated document"
@@ -70,6 +84,8 @@ function DocumentOutput({ content, streaming, onChange, onCopy, onRegenerate, on
               fontSize: "inherit",
               fontFamily: "inherit",
               color: "inherit",
+              scrollPaddingTop: 0,
+              scrollPaddingBottom: 0,
             }}
           />
         )}
