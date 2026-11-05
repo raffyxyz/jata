@@ -7,6 +7,8 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DocumentTypePicker, type DocType as PickerDocType } from "@/components/documents/DocumentTypePicker";
 import { DocumentOutput } from "@/components/documents/DocumentOutput";
+import { useTypewriter } from "@/lib/presentation/hooks/useTypewriter";
+import { useTitleAlert } from "@/lib/presentation/hooks/useTitleAlert";
 import { toast } from "@/components/ui/Toast";
 
 const docTypeMap: Record<PickerDocType, string> = {
@@ -17,66 +19,60 @@ const docTypeMap: Record<PickerDocType, string> = {
   proposal: "freelance_proposal",
 };
 
+const docTypeLabels: Record<PickerDocType, string> = {
+  "apply-instructions": "Application",
+  "cover-letter": "Cover Letter",
+  "cold-email": "Cold Email",
+  "linkedin-dm": "LinkedIn DM",
+  proposal: "Proposal",
+};
+
 export default function GeneratePage() {
   const params = useParams();
   const [docType, setDocType] = useState<PickerDocType>("cover-letter");
   const [tone, setTone] = useState("balanced");
-  const [generating, setGenerating] = useState(false);
-  const [content, setContent] = useState("");
-  const [streaming, setStreaming] = useState(false);
+  const { content, streaming, run: runTypewriter } = useTypewriter();
+  const notifyTab = useTitleAlert();
 
   const handleGenerate = async () => {
-    setGenerating(true);
-    setStreaming(true);
-    setContent("");
-
     try {
-      const res = await fetch("/api/generate-document", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          docType: docTypeMap[docType],
-          name: "Applicant",
-          jobTitle: "Senior Frontend Engineer",
-          company: "the company",
-          keyResponsibilities: [
-            "Build and maintain UI components",
-            "Collaborate with design team",
-            "Optimize application performance",
-          ],
-          matchedKeywords: [
-            "React",
-            "TypeScript",
-            "Next.js",
-            "Tailwind CSS",
-            "REST APIs",
-          ],
-          resumeSummary: "",
-          userTone: tone,
-        }),
+      // `runTypewriter` keeps revealing the text in the background, so the
+      // document finishes even when this tab is not focused.
+      await runTypewriter(async () => {
+        const res = await fetch("/api/generate-document", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            docType: docTypeMap[docType],
+            name: "Applicant",
+            jobTitle: "Senior Frontend Engineer",
+            company: "the company",
+            keyResponsibilities: [
+              "Build and maintain UI components",
+              "Collaborate with design team",
+              "Optimize application performance",
+            ],
+            matchedKeywords: [
+              "React",
+              "TypeScript",
+              "Next.js",
+              "Tailwind CSS",
+              "REST APIs",
+            ],
+            resumeSummary: "",
+            userTone: tone,
+          }),
+        });
+
+        const data = await res.json();
+        const raw = data.result.choices[0].message.content;
+        return raw.replace(/^\n+/, "");
       });
 
-      const data = await res.json();
-      const raw = data.result.choices[0].message.content;
-      const text = raw.replace(/^\n+/, "");
-
-      let displayed = "";
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i < text.length) {
-          displayed += text[i];
-          setContent(displayed);
-          i++;
-        } else {
-          clearInterval(interval);
-          setGenerating(false);
-          setStreaming(false);
-        }
-      }, 12);
+      // Flash the tab title + chime if the user is on another tab.
+      notifyTab(`📄 ${docTypeLabels[docType]} ready`);
     } catch {
       toast("error", "Failed to generate document.");
-      setGenerating(false);
-      setStreaming(false);
     }
   };
 
@@ -131,9 +127,9 @@ export default function GeneratePage() {
         size="lg"
         icon={<Sparkles size={16} />}
         onClick={handleGenerate}
-        loading={generating}
+        loading={streaming}
       >
-        {generating ? "Generating..." : `Generate ${docType === "apply-instructions" ? "Application" : docType === "cover-letter" ? "Cover Letter" : docType === "cold-email" ? "Cold Email" : docType === "linkedin-dm" ? "LinkedIn DM" : "Proposal"}`}
+        {streaming ? "Generating..." : `Generate ${docTypeLabels[docType]}`}
       </Button>
 
       <DocumentOutput

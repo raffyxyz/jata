@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   ArrowLeft,
   Upload,
@@ -24,6 +24,8 @@ import { toast } from "@/components/ui/Toast";
 import type { AtsScoreResult } from "@/lib/core/domain/entities/ats-score";
 import type { DocType } from "@/lib/llm/generateDocument";
 import { useResumes, useUploadResume } from "@/lib/presentation/hooks/useResumes";
+import { useTypewriter } from "@/lib/presentation/hooks/useTypewriter";
+import { useTitleAlert } from "@/lib/presentation/hooks/useTitleAlert";
 import {
   parseJob,
   getAtsScore,
@@ -60,6 +62,14 @@ function getDocTypes(
 
 const tones = ["Formal", "Balanced", "Conversational"];
 
+const DOC_TYPE_LABELS: Record<DocType, string> = {
+  cover_letter: "Cover Letter",
+  cold_email: "Cold Email",
+  linkedin_dm: "LinkedIn DM",
+  freelance_proposal: "Proposal",
+  apply_instructions: "Application",
+};
+
 const PASSING_SCORE = 60;
 
 function formatDate(iso: string): string {
@@ -88,21 +98,11 @@ export default function NewApplicationPage() {
 
   const [docType, setDocType] = useState<DocType>("cover_letter");
   const [tone, setTone] = useState("balanced");
-  const [generating, setGenerating] = useState(false);
-  const [docContent, setDocContent] = useState("");
-  const [streaming, setStreaming] = useState(false);
+  const { content: docContent, streaming, run: runTypewriter } = useTypewriter();
+  const notifyTab = useTitleAlert();
   const [saving, setSaving] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
 
   const handleUploadResume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,49 +161,30 @@ export default function NewApplicationPage() {
 
   const handleGenerateDocument = async () => {
     const resume = resumes.find((r) => r.id === selectedResume);
-    if (!resume?.parsedText || !parsedJob || !atsResult) return;
-
-    setGenerating(true);
-    setStreaming(true);
-    setDocContent("");
+    const resumeText = resume?.parsedText;
+    if (!resumeText || !parsedJob || !atsResult) return;
 
     try {
-      const text = await generateDocument({
-        docType,
-        name: resume.name ?? "Applicant",
-        jobTitle: parsedJob.job_title,
-        company: company ?? "the company",
-        keyResponsibilities: parsedJob.key_responsibilities,
-        matchedKeywords: atsResult.matched_keywords,
-        resumeSummary: resume.parsedText.slice(0, 1500),
-        userTone: tone,
-        applyInstructions: parsedJob.apply_instructions ?? undefined,
-      });
+      // `runTypewriter` reveals the text and keeps working while this tab is
+      // in the background: the document finishes without needing focus.
+      await runTypewriter(() =>
+        generateDocument({
+          docType,
+          name: resume?.name ?? "Applicant",
+          jobTitle: parsedJob.job_title,
+          company: company ?? "the company",
+          keyResponsibilities: parsedJob.key_responsibilities,
+          matchedKeywords: atsResult.matched_keywords,
+          resumeSummary: resumeText.slice(0, 1500),
+          userTone: tone,
+          applyInstructions: parsedJob.apply_instructions ?? undefined,
+        }),
+      );
 
-      let displayed = "";
-      let i = 0;
-      intervalRef.current = setInterval(() => {
-        if (i < text.length) {
-          displayed += text[i];
-          setDocContent(displayed);
-          i++;
-        } else {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          setGenerating(false);
-          setStreaming(false);
-        }
-      }, 12);
+      // Flash the tab title + chime if the user is on another tab.
+      notifyTab(`📄 ${DOC_TYPE_LABELS[docType]} ready`);
     } catch {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
       toast("error", "Failed to generate document.");
-      setGenerating(false);
-      setStreaming(false);
     }
   };
 
@@ -862,14 +843,14 @@ export default function NewApplicationPage() {
             size="lg"
             icon={<Sparkles size={16} />}
             onClick={handleGenerateDocument}
-            loading={generating}
+            loading={streaming}
           >
-            {generating
+            {streaming
               ? "Generating..."
-              : `Generate ${docType === "cover_letter" ? "Cover Letter" : docType === "cold_email" ? "Cold Email" : docType === "linkedin_dm" ? "LinkedIn DM" : docType === "freelance_proposal" ? "Proposal" : "Application"}`}
+              : `Generate ${DOC_TYPE_LABELS[docType]}`}
           </Button>
 
-          {(docContent || generating) && (
+          {(docContent || streaming) && (
             <>
               <DocumentOutput
                 content={docContent}
