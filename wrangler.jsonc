@@ -4,11 +4,14 @@
   "name": "jata",
   // Set this to today's date
   "compatibility_date": "2026-07-08",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "env": {
+    "staging": {
+      "name": "jata-staging"
+    }
   }
 }
