@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/infrastructure/supabase/server";
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 import { SupabaseGeneratedDocumentRepository } from "@/lib/infrastructure/repositories/supabase-generated-document.repository";
 import { GeneratedDocumentUseCases } from "@/lib/application/use-cases/generated-document";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const listHandler = async ({ user, supabase }: CallerContext) => {
   const repo = new SupabaseGeneratedDocumentRepository(supabase);
   const useCases = new GeneratedDocumentUseCases(repo);
   const documents = await useCases.getUserDocuments(user.id);
@@ -41,17 +32,14 @@ export async function GET() {
   }));
 
   return NextResponse.json(enriched);
-}
+};
 
-export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
+export const GET = withSession(listHandler);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const createHandler = async (
+  { supabase }: CallerContext,
+  request: NextRequest,
+) => {
   const body = await request.json();
   const { applicationId, type, content } = body;
 
@@ -64,4 +52,6 @@ export async function POST(request: NextRequest) {
   const doc = await useCases.saveDocument({ applicationId, type, content });
 
   return NextResponse.json(doc, { status: 201 });
-}
+};
+
+export const POST = withSession(createHandler);

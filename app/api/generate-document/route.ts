@@ -1,9 +1,13 @@
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 import { buildDocumentPrompt } from "@/lib/llm/generateDocument";
 import type { GenerateDocumentInput } from "@/lib/llm/generateDocument";
 
 const CF_API = "https://api.cloudflare.com/client/v4/accounts";
 
-export async function POST(request: Request) {
+export const generateHandler = async (
+  _ctx: CallerContext,
+  request: Request,
+): Promise<Response> => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_WORKERS_TOKEN;
 
@@ -37,4 +41,6 @@ export async function POST(request: Request) {
 
   const data = await res.json();
   return Response.json(data);
-}
+};
+
+export const POST = withSession(generateHandler);

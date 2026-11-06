@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/infrastructure/supabase/server";
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 
-export async function PATCH(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const patchHandler = async (
+  { supabase }: CallerContext,
+  request: NextRequest,
+) => {
   const body = await request.json();
   const { name } = body;
 
@@ -35,4 +27,6 @@ export async function PATCH(request: NextRequest) {
     avatarUrl: data.user.user_metadata?.avatar_url ?? null,
     createdAt: data.user.created_at,
   });
-}
+};
+
+export const PATCH = withSession(patchHandler);

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/infrastructure/supabase/server";
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 import { SupabaseResumeRepository } from "@/lib/infrastructure/repositories/supabase-resume.repository";
 import { SupabaseApplicationRepository } from "@/lib/infrastructure/repositories/supabase-application.repository";
 import { ResumeUseCases } from "@/lib/application/use-cases/resume";
@@ -18,31 +17,20 @@ function getStoragePathFromUrl(publicUrl: string): string | null {
   }
 }
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const listHandler = async ({ user, supabase }: CallerContext) => {
   const repo = new SupabaseResumeRepository(supabase);
   const useCases = new ResumeUseCases(repo);
   const resumes = await useCases.getUserResumes(user.id);
 
   return NextResponse.json(resumes);
-}
+};
 
-export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
+export const GET = withSession(listHandler);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const uploadHandler = async (
+  { user, supabase }: CallerContext,
+  request: NextRequest,
+) => {
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
 
@@ -91,17 +79,14 @@ export async function POST(request: NextRequest) {
   const resume = await useCases.uploadResume(user.id, file.name, publicUrl, parsedText);
 
   return NextResponse.json(resume, { status: 201 });
-}
+};
 
-export async function DELETE(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
+export const POST = withSession(uploadHandler);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const deleteHandler = async (
+  { user, supabase }: CallerContext,
+  request: NextRequest,
+) => {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
@@ -131,4 +116,6 @@ export async function DELETE(request: NextRequest) {
   await repo.delete(id);
 
   return NextResponse.json({ success: true });
-}
+};
+
+export const DELETE = withSession(deleteHandler);

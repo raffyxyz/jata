@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/infrastructure/supabase/server";
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 import { SupabaseApplicationRepository } from "@/lib/infrastructure/repositories/supabase-application.repository";
 import { ApplicationUseCases } from "@/lib/application/use-cases/application";
 
-export async function GET(
+export const getHandler = async (
+  { user, supabase }: CallerContext,
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const appRepo = new SupabaseApplicationRepository(supabase);
   const appUseCases = new ApplicationUseCases(appRepo);
   const application = await appUseCases.getApplicationById(id);
@@ -57,21 +49,16 @@ export async function GET(
       createdAt: d.created_at,
     })),
   });
-}
+};
 
-export async function PUT(
+export const GET = withSession(getHandler);
+
+export const putHandler = async (
+  { user, supabase }: CallerContext,
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const appRepo = new SupabaseApplicationRepository(supabase);
   const appUseCases = new ApplicationUseCases(appRepo);
 
@@ -95,21 +82,16 @@ export async function PUT(
   });
 
   return NextResponse.json(updated);
-}
+};
 
-export async function PATCH(
+export const PUT = withSession(putHandler);
+
+export const patchHandler = async (
+  { user, supabase }: CallerContext,
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const body = await request.json();
   const { status } = body;
 
@@ -130,21 +112,16 @@ export async function PATCH(
 
   const updated = await appUseCases.updateApplicationStatus(id, status);
   return NextResponse.json(updated);
-}
+};
 
-export async function DELETE(
+export const PATCH = withSession(patchHandler);
+
+export const deleteHandler = async (
+  { user, supabase }: CallerContext,
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
-) {
+) => {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const appRepo = new SupabaseApplicationRepository(supabase);
   const appUseCases = new ApplicationUseCases(appRepo);
 
@@ -226,4 +203,6 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true });
-}
+};
+
+export const DELETE = withSession(deleteHandler);

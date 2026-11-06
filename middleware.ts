@@ -4,11 +4,18 @@ import { createClient } from "@/lib/infrastructure/supabase/middleware";
 export async function middleware(request: NextRequest) {
   const { supabase, supabaseResponse } = createClient(request);
 
+  const { pathname } = request.nextUrl;
+
+  // API routes verify the Session themselves, behind the session seam
+  // (see GLOSSARY.md). Middleware's redirects only ever apply to pages,
+  // so don't validate the session twice.
+  if (pathname.startsWith("/api/")) {
+    return supabaseResponse;
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   const isAuthPage = pathname === "/login";
   const isRootPage = pathname === "/";

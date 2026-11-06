@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/infrastructure/supabase/server";
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 import { SupabaseApplicationRepository } from "@/lib/infrastructure/repositories/supabase-application.repository";
 import { SupabaseAtsResultRepository } from "@/lib/infrastructure/repositories/supabase-ats-result.repository";
 import { ApplicationUseCases } from "@/lib/application/use-cases/application";
 import { AtsResultUseCases } from "@/lib/application/use-cases/ats-result";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const listHandler = async ({ user, supabase }: CallerContext) => {
   const appRepo = new SupabaseApplicationRepository(supabase);
   const appUseCases = new ApplicationUseCases(appRepo);
   const applications = await appUseCases.getUserApplications(user.id);
@@ -38,17 +29,14 @@ export async function GET() {
   }));
 
   return NextResponse.json(enriched);
-}
+};
 
-export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
+export const GET = withSession(listHandler);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const createHandler = async (
+  { user, supabase }: CallerContext,
+  request: NextRequest,
+) => {
   const body = await request.json();
   const { company, jobTitle, jobDescription, jobUrl, resumeId, atsResult, parsedJd } = body;
 
@@ -83,4 +71,6 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json(application, { status: 201 });
-}
+};
+
+export const POST = withSession(createHandler);

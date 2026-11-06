@@ -1,3 +1,5 @@
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
+
 const CF_API = "https://api.cloudflare.com/client/v4/accounts";
 
 const ATS_SCORE_PROMPT = `
@@ -28,7 +30,10 @@ Return ONLY a valid JSON object.
 }
 `;
 
-export async function POST(request: Request) {
+export const scoreHandler = async (
+  _ctx: CallerContext,
+  request: Request,
+): Promise<Response> => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_WORKERS_TOKEN;
 
@@ -66,4 +71,6 @@ export async function POST(request: Request) {
 
   const data = await res.json();
   return Response.json(data);
-}
+};
+
+export const POST = withSession(scoreHandler);

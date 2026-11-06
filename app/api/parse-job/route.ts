@@ -1,3 +1,5 @@
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
+
 const CF_API = "https://api.cloudflare.com/client/v4/accounts";
 
 const JD_PARSE_PROMPT = `
@@ -20,7 +22,10 @@ Return ONLY a valid JSON object with no markdown or preamble.
 For "apply_instructions", look for a section titled "How to apply" or instructions on what to send (e.g. links, specific information, format requirements). Include the full text of those instructions. Set to null if no specific apply instructions exist.
 `;
 
-export async function POST(request: Request) {
+export const parseHandler = async (
+  _ctx: CallerContext,
+  request: Request,
+): Promise<Response> => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_WORKERS_TOKEN;
 
@@ -52,4 +57,6 @@ export async function POST(request: Request) {
 
   const data = await res.json();
   return Response.json(data);
-}
+};
+
+export const POST = withSession(parseHandler);

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/infrastructure/supabase/server";
+import { withSession, type CallerContext } from "@/lib/infrastructure/supabase/session";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 function getStoragePathFromUrl(publicUrl: string): string | null {
@@ -15,17 +14,7 @@ function getStoragePathFromUrl(publicUrl: string): string | null {
   }
 }
 
-export async function DELETE() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const deleteHandler = async ({ user, supabase }: CallerContext) => {
   // 1. Fetch all user applications
   const { data: applications } = await supabase
     .from("applications")
@@ -104,4 +93,6 @@ export async function DELETE() {
   }
 
   return NextResponse.json({ success: true });
-}
+};
+
+export const DELETE = withSession(deleteHandler);
